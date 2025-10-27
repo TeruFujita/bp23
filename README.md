@@ -3,6 +3,8 @@
 LINE Bot + Web アプリケーション + Go API サーバーによる寄り道検索システム
 
 ## プロジェクト構成
+
+```
 d:\develop\
 ├── line-bot/                    # LINE Bot アプリケーション
 │   ├── src/
@@ -109,7 +111,7 @@ d:\develop\
 ├── .env.example                 # 環境変数サンプル
 ├── .gitignore
 └── README.md
-
+```
 
 ## アーキテクチャ概要
 
