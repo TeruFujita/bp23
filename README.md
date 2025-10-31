@@ -2,6 +2,15 @@
 
 LINE Bot + Web アプリケーション + Go API サーバーによる寄り道検索システム
 
+## ドキュメント
+
+- [アーキテクチャ概要](docs/architecture.md)
+- [環境構築・起動手順](docs/setup.md)
+- [API 仕様](docs/api.md)
+- [データモデル](docs/data-model.md)
+- [外部APIと鍵の扱い](docs/external-apis.md)
+- [運用・本番移行](docs/operations.md)
+
 ## プロジェクト構成
 
 ```
@@ -113,11 +122,3 @@ d:\develop\line_bot\
 └── README.md
 ```
 
-## ドキュメント
-
-- [アーキテクチャ概要](docs/architecture.md)
-- [環境構築・起動手順](docs/setup.md)
-- [API 仕様](docs/api.md)
-- [データモデル](docs/data-model.md)
-- [外部APIと鍵の扱い](docs/external-apis.md)
-- [運用・本番移行](docs/operations.md)
