@@ -15,6 +15,63 @@ LINE Bot + Web アプリケーション + Go API サーバーによる寄り道�
 
 - [LINE Bot の仕組みと設定（ngrok/Webhookの理解）](docs/line-bot-explanation.md)
 
+## 必要な外部サービスアカウント登録（開発開始前）
+
+### ngrok（ローカル開発でLINE Webhook受信に必要）
+1. **アカウント登録**: https://dashboard.ngrok.com/signup （無料）
+2. **authtoken取得**: https://dashboard.ngrok.com/get-started/your-authtoken
+3. **authtoken設定**:
+   ```powershell
+   npx ngrok config add-authtoken YOUR_AUTHTOKEN
+   ```
+4. **インストール**（未導入の場合）:
+   ```powershell
+   npm install -g ngrok
+   ```
+
+### LINE Developers（LINE Bot作成に必要）
+1. **アカウント登録**: https://developers.line.biz/
+2. **チャネル作成**: 新規プロバイダー作成 → Messaging APIチャネル作成
+3. **必要情報の取得**:
+   - チャネルシークレット → `.env.local` の `LINE_CHANNEL_SECRET`
+   - チャネルアクセストークン → `.env.local` の `LINE_CHANNEL_TOKEN`
+
+### その他の外部API（後で設定可能）
+- OpenRouteService API: https://openrouteservice.org/ （経路探索）
+- ぐるなびAPI / HotPepper API: 必要に応じて申請
+
+詳細は [外部APIと鍵の扱い](docs/external-apis.md) を参照
+
+### チーム開発時の注意点
+
+#### Webhook URLの設定方法（選択肢）
+
+**パターンA: ngrokを個別に起動（推奨）**
+- 各開発者が各自のngrokを起動
+- 各自のWebhook URLをLINE Developersに設定（使う前に共有）
+- **設定手順：**
+  1. 各自で `npx ngrok http 3001` を起動
+  2. 表示されたURL（例: `https://xxxxx.ngrok.io`）をチームで共有
+  3. 使う前に「開発中です。Webhook URL: https://xxxxx.ngrok.io/webhook」と通知
+  4. LINE DevelopersでWebhook URLを設定・有効化
+  5. 終了時に「終了しました」と通知
+  6. 次の開発者が同じ手順で自分のURLを設定
+
+**パターンB: ngrokを共有で使う**
+- 1人がngrokを起動し、そのURLを全員で共有
+- 全員が同じWebhook URLを使用
+- **設定手順：**
+  1. 1人が `npx ngrok http 3001` を起動してURLを共有
+  2. 全員が同じWebhook URL（例: `https://xxxxx.ngrok.io/webhook`）をLINE Developersに設定
+  3. 各開発者は自分のローカルBotサーバー（localhost:3001）を起動
+  4. **注意**: ngrokは起動した人のローカルサーバー（localhost:3001）に転送するため、**起動した人のBotサーバーしか動作しない**
+
+**共通設定：**
+- `.env.local` の `LINE_CHANNEL_SECRET` / `LINE_CHANNEL_TOKEN` は同じチャンネルの値を全員で共有
+- 「応答メッセージ」はOFF推奨
+- ngrokのWeb UI（`http://127.0.0.1:4040`）でリクエスト履歴を確認可能
+
+
 ## プロジェクト構成
 
 ```
