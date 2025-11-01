@@ -22,6 +22,7 @@
 - 公開範囲: 管理者専用（開発中はローカル、本番は認証必須）
 
 ## セキュリティ
-- CORS は許可ドメイン限定（環境変数 ALLOWED_ORIGIN）
-- 秘密情報は .env/.env.local で管理（Git管理外）
-- LINE Webhook は署名検証を必須
+- CORS は許可ドメイン限定（環境変数 `ALLOWED_ORIGIN`、デフォルト: `http://localhost:3000`）
+- 秘密情報は `.env.local` で管理（`.gitignore` に含まれ、Git管理外）
+- LINE Webhook は署名検証を必須（`LINE_CHANNEL_SECRET` を使用）
+- 環境変数の自動読み込み: LINE Botは `godotenv` で `.env.local` を自動読み込み

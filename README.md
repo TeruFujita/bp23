@@ -33,14 +33,34 @@ LINE Bot + Web アプリケーション + Go API サーバーによる寄り道�
 1. **アカウント登録**: https://developers.line.biz/
 2. **チャネル作成**: 新規プロバイダー作成 → Messaging APIチャネル作成
 3. **必要情報の取得**:
-   - チャネルシークレット → `.env.local` の `LINE_CHANNEL_SECRET`
-   - チャネルアクセストークン → `.env.local` の `LINE_CHANNEL_TOKEN`
+   - チャネルシークレット → `.env.local` の `LINE_CHANNEL_SECRET` に設定
+   - チャネルアクセストークン → `.env.local` の `LINE_CHANNEL_TOKEN` に設定
+   - **注意**: `.env.local` は `line-bot/src/main.go` が自動で読み込みます（godotenv使用）
 
 ### その他の外部API（後で設定可能）
 - OpenRouteService API: https://openrouteservice.org/ （経路探索）
 - ぐるなびAPI / HotPepper API: 必要に応じて申請
 
 詳細は [外部APIと鍵の扱い](docs/external-apis.md) を参照
+
+### 環境変数について
+
+`.env.local` に以下の環境変数を設定します（`.env.example` をコピーして実際の値を設定）。
+
+**必須（LINE Bot動作に必要）：**
+- `LINE_CHANNEL_SECRET`: LINE Developersで取得
+- `LINE_CHANNEL_TOKEN`: LINE Developersで取得
+
+**その他の主要環境変数：**
+- `DATABASE_URL`: PostgreSQL接続文字列
+- `ALLOWED_ORIGIN`: CORS許可ドメイン（デフォルト: `http://localhost:3000`）
+- `PORT`: Botサーバーポート（デフォルト: `3001`）
+- `JWT_SECRET`: JWT署名用
+- `LINE_LOGIN_*`: LINE Login設定（将来実装）
+- `NEXT_PUBLIC_*`: フロントエンド公開変数
+- `ORS_API_KEY`, `GURUNAVI_API_KEY`, `HOTPEPPER_API_KEY`: 外部APIキー（オプション）
+
+**詳細は [環境構築・起動手順](docs/setup.md#環境変数) を参照**
 
 ### チーム開発時の注意点
 
@@ -76,109 +96,57 @@ LINE Bot + Web アプリケーション + Go API サーバーによる寄り道�
 
 ```
 d:\develop\line_bot\
-├── line-bot/                    # LINE Bot アプリケーション
-│   ├── src/
-│   │   ├── handlers/           # メッセージハンドラー
-│   │   ├── services/           # ビジネスロジック
-│   │   ├── models/             # データモデル
-│   │   └── utils/              # ユーティリティ
+├── line-bot\                     # LINE Bot（Go）
+│   ├── src\
+│   │   ├── main.go               # Webhook実装済み（署名検証/Flex返信）
+│   │   ├── handlers\             # メッセージハンドラー（将来実装）
+│   │   ├── services\             # ビジネスロジック（将来実装）
+│   │   ├── models\               # データモデル（将来実装）
+│   │   └── utils\                 # ユーティリティ（将来実装）
 │   ├── go.mod
 │   └── go.sum
 │
-├── web-app/                     # Next.js Webアプリケーション
-│   ├── src/
-│   │   ├── app/                # App Router
-│   │   │   ├── (auth)/         # 認証関連ページ
-│   │   │   │   ├── login/
-│   │   │   │   └── callback/
-│   │   │   ├── (dashboard)/    # ダッシュボード関連
-│   │   │   │   ├── home/       # ホーム（履歴+マップ）
-│   │   │   │   ├── favorites/  # お気に入り一覧
-│   │   │   │   └── statistics/ # 統計ページ
-│   │   │   ├── api/            # API Routes（必要に応じて）
-│   │   │   ├── globals.css
-│   │   │   ├── layout.tsx
-│   │   │   └── page.tsx
-│   │   ├── components/         # 共通コンポーネント
-│   │   │   ├── ui/             # 基本UIコンポーネント
-│   │   │   ├── map/            # 地図関連コンポーネント
-│   │   │   └── layout/         # レイアウトコンポーネント
-│   │   ├── features/           # Feature-based構造
-│   │   │   ├── auth/           # 認証機能
-│   │   │   │   ├── components/
-│   │   │   │   ├── hooks/
-│   │   │   │   ├── services/
-│   │   │   │   └── types/
-│   │   │   ├── favorites/      # お気に入り機能
-│   │   │   │   ├── components/
-│   │   │   │   ├── hooks/
-│   │   │   │   ├── services/
-│   │   │   │   └── types/
-│   │   │   ├── history/        # 履歴機能
-│   │   │   │   ├── components/
-│   │   │   │   ├── hooks/
-│   │   │   │   ├── services/
-│   │   │   │   └── types/
-│   │   │   └── map/            # 地図機能
-│   │   │       ├── components/
-│   │   │       ├── hooks/
-│   │   │       └── services/
-│   │   ├── lib/                # 共通ライブラリ
-│   │   │   ├── api/            # API クライアント
-│   │   │   ├── auth/           # 認証設定
-│   │   │   ├── utils/          # ユーティリティ
-│   │   │   └── constants/      # 定数
-│   │   ├── types/              # グローバル型定義
-│   │   └── styles/             # スタイル
+├── api-server\                   # APIサーバー（Go + Gin）
+│   ├── cmd\server\main.go       # /healthz, CORS（厳格設定）
+│   ├── internal\
+│   │   ├── handlers\            # HTTP ハンドラー（将来実装）
+│   │   ├── services\            # ビジネスロジック（将来実装）
+│   │   ├── repositories\        # データアクセス層（将来実装）
+│   │   ├── models\              # データモデル（将来実装）
+│   │   └── middleware\          # ミドルウェア（将来実装）
+│   ├── pkg\
+│   │   ├── database\
+│   │   ├── config\
+│   │   └── utils\
+│   ├── migrations\              # DBマイグレーション（将来実装）
+│   ├── go.mod
+│   └── go.sum
+│
+├── web-app\                      # 管理UI（Next.js 14）
+│   ├── src\app\
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   └── globals.css
 │   ├── package.json
-│   ├── next.config.js
-│   └── tailwind.config.js
+│   └── next.config.ts
 │
-├── api-server/                  # Go API サーバー
-│   ├── cmd/
-│   │   └── server/
-│   │       └── main.go
-│   ├── internal/
-│   │   ├── handlers/           # HTTP ハンドラー
-│   │   │   ├── auth/
-│   │   │   ├── favorites/
-│   │   │   ├── history/
-│   │   │   └── places/
-│   │   ├── services/           # ビジネスロジック
-│   │   │   ├── auth/
-│   │   │   ├── favorites/
-│   │   │   ├── history/
-│   │   │   └── places/
-│   │   ├── repositories/       # データアクセス層
-│   │   │   ├── auth/
-│   │   │   ├── favorites/
-│   │   │   ├── history/
-│   │   │   └── places/
-│   │   ├── models/             # データモデル
-│   │   └── middleware/         # ミドルウェア
-│   ├── pkg/                    # 共通パッケージ
-│   │   ├── database/
-│   │   ├── config/
-│   │   └── utils/
-│   ├── migrations/             # DBマイグレーション
-│   ├── go.mod
-│   └── go.sum
+├── shared\                       # 共通定義（将来実装）
+│   ├── types\
+│   └── constants\
 │
-├── shared/                      # 共通定義
-│   ├── types/                   # 共通型定義
-│   └── constants/               # 共通定数
+├── scripts\                      # 開発用スクリプト（将来実装）
 │
-├── scripts/                     # 開発用スクリプト
-│   ├── setup-dev.sh            # 開発環境セットアップ
-│   ├── start-dev.sh            # 開発環境起動
-│   └── migrate.sh              # DBマイグレーション実行
+├── docs\                         # ドキュメント
+│   ├── architecture.md
+│   ├── setup.md
+│   ├── api.md
+│   ├── data-model.md
+│   ├── external-apis.md
+│   ├── operations.md
+│   └── line-bot-explanation.md
 │
-├── docs/                        # ドキュメント
-│   ├── api/                     # API仕様書
-│   ├── deployment/              # デプロイ手順
-│   └── development/             # 開発ガイド
-│
-├── .env.example                 # 環境変数サンプル
+├── .env.example                  # 環境変数サンプル
+├── .env.local                    # 実際の設定（Git管理外）
 ├── .gitignore
 └── README.md
 ```

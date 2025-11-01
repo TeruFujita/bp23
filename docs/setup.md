@@ -6,17 +6,45 @@
 - PostgreSQL 14+
 
 ## 環境変数
-- ルートに `.env`（例は `.env.example`）
-- 主要キー: `DATABASE_URL`, `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_TOKEN`, `LINE_LOGIN_*`, `NEXT_PUBLIC_*`, `JWT_SECRET`, `ALLOWED_ORIGIN`, `PORT`
+- ルートに `.env.local` を作成（`.env.example` をコピーして実際の値を設定）
+- **LINE Botは自動で `.env.local` を読み込む**（godotenv使用）
 
-### 環境変数の設定方法（PowerShell）
-```powershell
-# .env から読み込む（手動で設定する場合）
-$env:LINE_CHANNEL_SECRET="YOUR_SECRET"
-$env:LINE_CHANNEL_TOKEN="YOUR_TOKEN"
-$env:PORT="3001"
-$env:ALLOWED_ORIGIN="http://localhost:3000"
-```
+### 必要な環境変数一覧
+
+#### Database
+- `DATABASE_URL`: PostgreSQL接続文字列（例: `postgres://postgres:YOUR_PASSWORD@localhost:5432/detour_bot_dev?sslmode=disable`）
+
+#### LINE Messaging API（必須）
+- `LINE_CHANNEL_SECRET`: LINE Developersで取得
+- `LINE_CHANNEL_TOKEN`: LINE Developersで取得
+
+#### LINE Login（Web管理UI用、将来実装）
+- `LINE_LOGIN_CLIENT_ID`: LINE Loginチャネルで取得
+- `LINE_LOGIN_CLIENT_SECRET`: LINE Loginチャネルで取得
+- `LINE_LOGIN_CALLBACK_URL`: `http://localhost:3000/(auth)/callback`
+
+#### Frontend（公開変数）
+- `NEXT_PUBLIC_MAPS_API_KEY`: 地図APIキー（Google Maps等）
+
+#### API Server
+- `JWT_SECRET`: JWT署名用（変更推奨）
+- `ALLOWED_ORIGIN`: CORS許可ドメイン（デフォルト: `http://localhost:3000`）
+
+#### LINE Bot Server
+- `PORT`: Botサーバーのポート（デフォルト: `3001`）
+
+#### External APIs（オプション）
+- `ORS_API_KEY`: OpenRouteService APIキー
+- `GURUNAVI_API_KEY`: ぐるなびAPIキー
+- `HOTPEPPER_API_KEY`: HotPepper APIキー
+- `NEXT_PUBLIC_MAPBOX_TOKEN`: Mapboxトークン（地図の代替）
+
+### 設定方法
+1. `.env.example` を `.env.local` にコピー
+2. 実際の値を設定（LINE Developersで取得した値など）
+3. 必須項目: `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_TOKEN`（LINE Bot動作に必要）
+
+**注意**: `.env.local` は `.gitignore` に含まれているため、Gitにはコミットされません
 
 ## DB 準備
 - DB 作成: `detour_bot_dev`
@@ -74,7 +102,7 @@ npm run dev
 
 ## LINE Bot 開発フロー（ngrok設定含む）
 1. LINE Developers でチャネル作成 → `LINE_CHANNEL_SECRET` と `LINE_CHANNEL_TOKEN` を取得
-2. `.env` に設定（環境変数として読み込む）
+2. `.env.local` に設定（`line-bot/src/main.go` が自動で読み込む）
 3. ローカルで起動: `cd line-bot && go run src/main.go`（ポート3001）
 4. ngrok で公開:
    ```powershell

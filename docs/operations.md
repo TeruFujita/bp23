@@ -12,4 +12,6 @@
 - 監視（ヘルスチェック, 重要メトリクス）
 
 ## 秘匿情報
-- .envは本番では使わず、Secret Manager/KMS等を利用
+- 開発環境: `.env.local` で管理（`.gitignore` に含まれ、Git管理外）
+- 本番環境: `.env.local` は使わず、Secret Manager/KMS等を利用
+- 環境変数の自動読み込み: 開発環境ではLINE Botが `godotenv` で `.env.local` を自動読み込み
