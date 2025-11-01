@@ -11,6 +11,10 @@ LINE Bot + Web アプリケーション + Go API サーバーによる寄り道�
 - [外部APIと鍵の扱い](docs/external-apis.md)
 - [運用・本番移行](docs/operations.md)
 
+### 学習・理解用
+
+- [LINE Bot の仕組みと設定（ngrok/Webhookの理解）](docs/line-bot-explanation.md)
+
 ## プロジェクト構成
 
 ```
