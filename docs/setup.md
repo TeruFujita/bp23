@@ -58,13 +58,23 @@
 2. ngrok（Botサーバーを公開）
 
 **起動手順：**
-```powershell
-# 1. Botサーバー起動（PowerShell タブ1）
-cd line-bot
-go run src/main.go
 
-# 2. ngrok起動（PowerShell タブ2）
-cd ..
+**PowerShell タブ1: Botサーバー起動**
+```powershell
+# プロジェクトルートから line-bot ディレクトリに移動
+cd line-bot
+
+# 現在のディレクトリ: d:\develop\line_bot\line-bot\
+# Botサーバー起動（ポート3001）
+go run src/main.go
+```
+
+**PowerShell タブ2: ngrok起動**
+```powershell
+# プロジェクトルートにいることを確認
+# 現在のディレクトリ: d:\develop\line_bot\ （ルート）
+
+# ngrokでポート3001を公開
 npx ngrok http 3001
 ```
 
@@ -77,13 +87,24 @@ npx ngrok http 3001
 2. Webアプリ（`localhost:3000`）
 
 **起動手順：**
-```powershell
-# 1. APIサーバー起動（PowerShell タブ1）
-cd api-server
-go run cmd/server/main.go
 
-# 2. Webアプリ起動（PowerShell タブ2）
-cd ../web-app
+**PowerShell タブ1: APIサーバー起動**
+```powershell
+# プロジェクトルートから api-server ディレクトリに移動
+cd api-server
+
+# 現在のディレクトリ: d:\develop\line_bot\api-server\
+# APIサーバー起動（ポート8080）
+go run cmd/server/main.go
+```
+
+**PowerShell タブ2: Webアプリ起動**
+```powershell
+# プロジェクトルートから web-app ディレクトリに移動
+cd web-app
+
+# 現在のディレクトリ: d:\develop\line_bot\web-app\
+# Next.js開発サーバー起動（ポート3000）
 npm run dev
 ```
 
@@ -102,13 +123,12 @@ npm run dev
 
 ## LINE Bot 開発フロー（ngrok設定含む）
 1. LINE Developers でチャネル作成 → `LINE_CHANNEL_SECRET` と `LINE_CHANNEL_TOKEN` を取得
-2. `.env.local` に設定（`line-bot/src/main.go` が自動で読み込む）
-3. ローカルで起動: `cd line-bot && go run src/main.go`（ポート3001）
-4. ngrok で公開:
-   ```powershell
-   ngrok http 3001
-   ```
-   → 表示される `Forwarding: https://xxxxx.ngrok.io -> http://localhost:3001` のURLをメモ
+2. プロジェクトルート（`d:\develop\line_bot\`）で `.env.local` に設定（`line-bot/src/main.go` が自動で読み込む）
+3. **Botサーバー起動**: プロジェクトルートから `cd line-bot` して `go run src/main.go`（ポート3001）
+   - **現在のディレクトリ**: `d:\develop\line_bot\line-bot\`
+4. **ngrok起動**: プロジェクトルート（`d:\develop\line_bot\`）で `npx ngrok http 3001`
+   - **現在のディレクトリ**: `d:\develop\line_bot\`（ルート）
+   - → 表示される `Forwarding: https://xxxxx.ngrok.io -> http://localhost:3001` のURLをメモ
 5. LINE Developers コンソールで:
    - Webhook URL に `https://xxxxx.ngrok.io/webhook` を設定
    - 「Webhookの利用」を有効化
