@@ -22,15 +22,55 @@ $env:ALLOWED_ORIGIN="http://localhost:3000"
 - DB 作成: `detour_bot_dev`
 - 初期マイグレーション適用（psql）
 
-## 起動
-- API: `cd api-server && go run cmd/server/main.go`（ポート8080）
-- Web: `cd web-app && npm run dev`（ポート3000）
-- Bot: `cd line-bot && go run src/main.go`（ポート3001）
+## 起動が必要なサービスと組み合わせ
 
-### 起動確認
-- API: `http://localhost:8080/healthz` → `{"status":"ok"}` が返ればOK
-- Web: `http://localhost:3000` にアクセスしてページが表示されればOK
-- Bot: `http://localhost:3001/webhook` はエンドポイント（LINEから呼ばれる）
+### LINE Botを動作させる場合
+**同時に起動が必要：**
+1. LINE Botサーバー（`localhost:3001`）
+2. ngrok（Botサーバーを公開）
+
+**起動手順：**
+```powershell
+# 1. Botサーバー起動（PowerShell タブ1）
+cd line-bot
+go run src/main.go
+
+# 2. ngrok起動（PowerShell タブ2）
+cd ..
+npx ngrok http 3001
+```
+
+**動作確認：**
+- LINEでメッセージ送信 → Flexメッセージが返ってくればOK
+
+### Web管理UIを動作させる場合
+**同時に起動が必要：**
+1. APIサーバー（`localhost:8080`）
+2. Webアプリ（`localhost:3000`）
+
+**起動手順：**
+```powershell
+# 1. APIサーバー起動（PowerShell タブ1）
+cd api-server
+go run cmd/server/main.go
+
+# 2. Webアプリ起動（PowerShell タブ2）
+cd ../web-app
+npm run dev
+```
+
+**動作確認：**
+- `http://localhost:3000` にアクセス → ページ表示
+- `http://localhost:8080/healthz` → `{"status":"ok"}` が返る
+
+### すべてを同時に動作させる場合
+**3つのターミナルが必要：**
+1. LINE Botサーバー + ngrok（LINE Bot用）
+2. APIサーバー（Web管理UI用）
+3. Webアプリ（管理UI用）
+
+**最小構成（LINE Botだけ使う場合）：**
+- Botサーバー + ngrok のみで動作可（API/Web不要）
 
 ## LINE Bot 開発フロー（ngrok設定含む）
 1. LINE Developers でチャネル作成 → `LINE_CHANNEL_SECRET` と `LINE_CHANNEL_TOKEN` を取得
