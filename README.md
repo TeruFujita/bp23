@@ -1,149 +1,194 @@
-# bp23
+# Detour Bot - 寄り道検索システム
 
-LINE Bot + Web アプリケーション + Go API サーバーによる寄り道検索システム
+LINE Bot + Web管理UI + Go APIサーバーによる、経路検索と寄り道スポット提案システム
 
-## ドキュメント
+## 📚 目次
 
-- [アーキテクチャ概要](docs/architecture.md)
-- [環境構築・起動手順](docs/setup.md)
-- [API 仕様](docs/api.md)
-- [データモデル](docs/data-model.md)
-- [外部APIと鍵の扱い](docs/external-apis.md)
-- [運用・本番移行](docs/operations.md)
+- [🚀 クイックスタート](#-クイックスタート)
+- [📖 ドキュメント](#-ドキュメント)
+- [🛠️ 必要なもの](#️-必要なもの)
+- [🏗️ プロジェクト構成](#️-プロジェクト構成)
 
-### 学習・理解用
+---
 
-- [LINE Bot の仕組みと設定（ngrok/Webhookの理解）](docs/line-bot-explanation.md)
+## 🚀 クイックスタート
 
-## 必要な外部サービスアカウント登録（開発開始前）
+### 1. 必要なソフトをインストール
 
-### ngrok（ローカル開発でLINE Webhook受信に必要）
-1. **アカウント登録**: https://dashboard.ngrok.com/signup （無料）
-2. **authtoken取得**: https://dashboard.ngrok.com/get-started/your-authtoken
-3. **authtoken設定**:
+- **Go** 1.22以上
+- **Node.js** 18以上  
+- **PostgreSQL** 14以上
+
+### 2. 外部サービスを準備
+
+#### LINE Developers（必須）
+1. https://developers.line.biz/ に登録
+2. Messaging APIチャネルを作成
+3. `LINE_CHANNEL_SECRET` と `LINE_CHANNEL_TOKEN` を取得
+
+#### ngrok（LINE Bot開発時のみ必要）
+1. https://dashboard.ngrok.com/signup でアカウント作成
+2. authtokenを取得して設定:
    ```powershell
    npx ngrok config add-authtoken YOUR_AUTHTOKEN
    ```
-4. **インストール**（未導入の場合）:
-   ```powershell
-   npm install -g ngrok
-   ```
 
-### LINE Developers（LINE Bot作成に必要）
-1. **アカウント登録**: https://developers.line.biz/
-2. **チャネル作成**: 新規プロバイダー作成 → Messaging APIチャネル作成
-3. **必要情報の取得**:
-   - チャネルシークレット → `.env.local` の `LINE_CHANNEL_SECRET` に設定
-   - チャネルアクセストークン → `.env.local` の `LINE_CHANNEL_TOKEN` に設定
-   - **注意**: `.env.local` は `line-bot/src/main.go` が自動で読み込みます（godotenv使用）
+### 3. 環境変数を設定
 
-### その他の外部API（後で設定可能）
-- OpenRouteService API: https://openrouteservice.org/ （経路探索）
-- ぐるなびAPI / HotPepper API: 必要に応じて申請
+プロジェクトルートで `.env.example` を `.env.local` にコピーし、以下の値を設定:
 
-詳細は [外部APIと鍵の扱い](docs/external-apis.md) を参照
-
-### 環境変数について
-
-`.env.local` に以下の環境変数を設定します（`.env.example` をコピーして実際の値を設定）。
-
-**必須（LINE Bot動作に必要）：**
+**必須項目:**
 - `LINE_CHANNEL_SECRET`: LINE Developersで取得
 - `LINE_CHANNEL_TOKEN`: LINE Developersで取得
 
-**その他の主要環境変数：**
-- `DATABASE_URL`: PostgreSQL接続文字列
-- `ALLOWED_ORIGIN`: CORS許可ドメイン（デフォルト: `http://localhost:3000`）
-- `PORT`: Botサーバーポート（デフォルト: `3001`）
-- `JWT_SECRET`: JWT署名用
-- `LINE_LOGIN_*`: LINE Login設定（将来実装）
-- `NEXT_PUBLIC_*`: フロントエンド公開変数
-- `ORS_API_KEY`, `GURUNAVI_API_KEY`, `HOTPEPPER_API_KEY`: 外部APIキー（オプション）
+詳細は [環境構築ガイド](docs/setup.md) を参照
 
-**詳細は [環境構築・起動手順](docs/setup.md#環境変数) を参照**
+### 4. データベースを準備
 
-### チーム開発時の注意点
+```powershell
+# データベース作成
+psql -U postgres -c "CREATE DATABASE detour_bot_dev;"
 
-#### Webhook URLの設定方法（選択肢）
+# マイグレーション実行（プロジェクトルートから）
+psql "postgres://postgres:YOUR_PASSWORD@localhost:5432/detour_bot_dev?sslmode=disable" -f api-server/migrations/0001_init.sql
+```
 
-**パターンA: ngrokを個別に起動（推奨）**
-- 各開発者が各自のngrokを起動
-- 各自のWebhook URLをLINE Developersに設定（使う前に共有）
-- **設定手順：**
-  1. 各自で `npx ngrok http 3001` を起動
-  2. 表示されたURL（例: `https://xxxxx.ngrok.io`）をチームで共有
-  3. 使う前に「開発中です。Webhook URL: https://xxxxx.ngrok.io/webhook」と通知
-  4. LINE DevelopersでWebhook URLを設定・有効化
-  5. 終了時に「終了しました」と通知
-  6. 次の開発者が同じ手順で自分のURLを設定
+### 5. サーバーを起動
 
-**パターンB: ngrokを共有で使う**
-- 1人がngrokを起動し、そのURLを全員で共有
-- 全員が同じWebhook URLを使用
-- **設定手順：**
-  1. 1人が `npx ngrok http 3001` を起動してURLを共有
-  2. 全員が同じWebhook URL（例: `https://xxxxx.ngrok.io/webhook`）をLINE Developersに設定
-  3. 各開発者は自分のローカルBotサーバー（localhost:3001）を起動
-  4. **注意**: ngrokは起動した人のローカルサーバー（localhost:3001）に転送するため、**起動した人のBotサーバーしか動作しない**
+**LINE Botを使う場合:**
+```powershell
+# ターミナル1: Botサーバー
+cd line-bot
+go run src/main.go
 
-**共通設定：**
-- `.env.local` の `LINE_CHANNEL_SECRET` / `LINE_CHANNEL_TOKEN` は同じチャンネルの値を全員で共有
-- 「応答メッセージ」はOFF推奨
-- ngrokのWeb UI（`http://127.0.0.1:4040`）でリクエスト履歴を確認可能
+# ターミナル2: ngrok（別ウィンドウ）
+npx ngrok http 3001
+# → 表示されたURLをLINE DevelopersのWebhook URLに設定
+```
 
+**Web管理UIを使う場合:**
+```powershell
+# ターミナル1: APIサーバー
+cd api-server
+go run cmd/server/main.go
 
-## プロジェクト構成
+# ターミナル2: Webアプリ
+cd web-app
+npm install  # 初回のみ
+npm run dev
+```
+
+詳細な手順は [環境構築ガイド](docs/setup.md) を参照してください。
+
+---
+
+## 📖 ドキュメント
+
+### 📘 開発者向け
+
+| ドキュメント | 説明 |
+|---|---|
+| [環境構築ガイド](docs/setup.md) | セットアップ手順、環境変数、起動方法 |
+| [アーキテクチャ概要](docs/architecture.md) | システム構成、技術スタック、設計方針 |
+| [データモデル](docs/data-model.md) | データベーステーブル設計 |
+
+### 🔧 技術詳細
+
+| ドキュメント | 説明 |
+|---|---|
+| [API仕様](docs/api.md) | REST APIエンドポイント一覧（現在は `/healthz` のみ） |
+| [外部API連携](docs/external-apis.md) | 使用する外部API（経路探索、店舗検索など） |
+| [LINE Botの仕組み](docs/line-bot-explanation.md) | Webhook、ngrok、署名検証の解説 |
+
+### 🚀 運用・本番
+
+| ドキュメント | 説明 |
+|---|---|
+| [運用・本番移行](docs/operations.md) | 認証設定、セキュリティ、デプロイ方針 |
+
+---
+
+## 🛠️ 必要なもの
+
+### 開発環境
+
+- **Go** 1.22以上（または 1.23）
+- **Node.js** 18以上
+- **PostgreSQL** 14以上
+
+### 外部サービスアカウント
+
+- **LINE Developers**（必須）
+  - Messaging APIチャネル作成
+  - チャネルシークレットとアクセストークンを取得
+
+- **ngrok**（LINE Bot開発時のみ）
+  - 無料アカウントでOK
+  - ローカルサーバーを公開するため
+
+- **その他**（オプション、後で設定可能）
+  - OpenRouteService API（経路探索）
+  - ぐるなびAPI / HotPepper API（店舗検索）
+
+---
+
+## 🏗️ プロジェクト構成
 
 ```
-d:\develop\line_bot\
-├── line-bot\                     # LINE Bot（Go）
-│   ├── src\
+line_bot/
+├── line-bot/                     # LINE Botサーバー（Go）
+│   ├── src/
 │   │   ├── main.go               # Webhook実装済み（署名検証/Flex返信）
-│   │   ├── handlers\             # メッセージハンドラー（将来実装）
-│   │   ├── services\             # ビジネスロジック（将来実装）
-│   │   ├── models\               # データモデル（将来実装）
-│   │   └── utils\                 # ユーティリティ（将来実装）
+│   │   ├── handlers/             # メッセージハンドラー（将来実装）
+│   │   ├── services/             # ビジネスロジック（将来実装）
+│   │   ├── models/               # データモデル（将来実装）
+│   │   └── utils/                 # ユーティリティ（将来実装）
 │   ├── go.mod
 │   └── go.sum
 │
-├── api-server\                   # APIサーバー（Go + Gin）
-│   ├── cmd\server\main.go       # /healthz, CORS（厳格設定）
-│   ├── internal\
-│   │   ├── handlers\            # HTTP ハンドラー（将来実装）
-│   │   ├── services\            # ビジネスロジック（将来実装）
-│   │   ├── repositories\        # データアクセス層（将来実装）
-│   │   ├── models\              # データモデル（将来実装）
-│   │   └── middleware\          # ミドルウェア（将来実装）
-│   ├── pkg\
-│   │   ├── database\
-│   │   ├── config\
-│   │   └── utils\
-│   ├── migrations\              # DBマイグレーション（将来実装）
+├── api-server/                   # APIサーバー（Go + Gin）
+│   ├── cmd/
+│   │   └── server/
+│   │       └── main.go           # /healthz, CORS（厳格設定）
+│   ├── internal/
+│   │   ├── handlers/             # HTTP ハンドラー（将来実装）
+│   │   ├── services/             # ビジネスロジック（将来実装）
+│   │   ├── repositories/         # データアクセス層（将来実装）
+│   │   ├── models/               # データモデル（将来実装）
+│   │   └── middleware/           # ミドルウェア（将来実装）
+│   ├── pkg/
+│   │   ├── database/             # データベース接続（将来実装）
+│   │   ├── config/               # 設定管理（将来実装）
+│   │   └── utils/                 # ユーティリティ（将来実装）
+│   ├── migrations/               # DBマイグレーション
+│   │   └── 0001_init.sql         # 初期スキーマ（users, routes, spots）
 │   ├── go.mod
 │   └── go.sum
 │
-├── web-app\                      # 管理UI（Next.js 14）
-│   ├── src\app\
-│   │   ├── layout.tsx
-│   │   ├── page.tsx
-│   │   └── globals.css
+├── web-app/                      # 管理UI（Next.js 14）
+│   ├── src/
+│   │   └── app/
+│   │       ├── layout.tsx
+│   │       ├── page.tsx
+│   │       └── globals.css
 │   ├── package.json
-│   └── next.config.ts
+│   ├── next.config.ts
+│   └── tsconfig.json
 │
-├── shared\                       # 共通定義（将来実装）
-│   ├── types\
-│   └── constants\
+├── shared/                       # 共通定義（将来実装）
+│   ├── types/                    # 共通型定義
+│   └── constants/                # 定数定義
 │
-├── scripts\                      # 開発用スクリプト（将来実装）
+├── scripts/                      # 開発用スクリプト（将来実装）
 │
-├── docs\                         # ドキュメント
-│   ├── architecture.md
-│   ├── setup.md
-│   ├── api.md
-│   ├── data-model.md
-│   ├── external-apis.md
-│   ├── operations.md
-│   └── line-bot-explanation.md
+├── docs/                         # ドキュメント
+│   ├── architecture.md           # アーキテクチャ概要
+│   ├── setup.md                  # 環境構築・起動手順
+│   ├── api.md                    # API仕様
+│   ├── data-model.md             # データモデル
+│   ├── external-apis.md          # 外部APIと鍵の扱い
+│   ├── operations.md             # 運用・本番移行
+│   └── line-bot-explanation.md   # LINE Botの仕組みと設定
 │
 ├── .env.example                  # 環境変数サンプル
 ├── .env.local                    # 実際の設定（Git管理外）
@@ -151,3 +196,56 @@ d:\develop\line_bot\
 └── README.md
 ```
 
+### 各コンポーネントの役割
+
+| コンポーネント | ポート | 役割 |
+|---|---|---|
+| **LINE Bot** | 3001 | LINEからのWebhookを受信して返信 |
+| **API Server** | 8080 | Web管理UIから呼ばれるREST API |
+| **Web App** | 3000 | 管理UI（ブラウザでアクセス） |
+
+---
+
+## 💡 チーム開発時の注意点
+
+### 環境変数の共有
+
+- `LINE_CHANNEL_SECRET` / `LINE_CHANNEL_TOKEN` は全員で同じ値を共有（同じLINEチャネルを使用）
+- `.env.local` はGit管理外なので、各自で設定が必要
+
+### ngrokの使い方
+
+**推奨: 各自でngrokを起動**
+- 各開発者が `npx ngrok http 3001` を実行
+- 取得したURLをチームで共有してから、LINE Developersで設定
+- 使う前に「開発中です」と通知、終了時に「終了しました」と通知
+
+**注意**: ngrokを共有する場合、起動した人のBotサーバーしか動作しません
+
+詳細は [環境構築ガイド - チーム開発](docs/setup.md#チーム開発) を参照
+
+---
+
+## 📝 現在の実装状況
+
+### ✅ 実装済み
+
+- LINE Bot: Webhook受信、署名検証、Flexメッセージ返信
+- API Server: `/healthz` エンドポイント、CORS設定
+- データベース: マイグレーションファイル（users, routes, spotsテーブル）
+
+### 🔄 将来実装予定
+
+- API Server: データベース接続、CRUDエンドポイント
+- Web App: 履歴・お気に入り・統計機能
+- 認証: LINE Login統合
+- 外部API連携: 経路探索、店舗検索
+
+---
+
+## 🤝 質問・問題があれば
+
+ドキュメントを確認してください：
+- 環境構築で困った → [環境構築ガイド](docs/setup.md)
+- LINE Botの仕組みが知りたい → [LINE Botの仕組み](docs/line-bot-explanation.md)
+- アーキテクチャを知りたい → [アーキテクチャ概要](docs/architecture.md)
