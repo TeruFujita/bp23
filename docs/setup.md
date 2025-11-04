@@ -307,6 +307,14 @@ NEXT_PUBLIC_MAPBOX_TOKEN=Mapboxトークン
 
 ## トラブルシューティング
 
+### PostgreSQLサービスが起動しない
+
+PowerShellを**管理者として実行**してから以下を実行してください：
+
+```powershell
+Start-Service "postgresql-x64-18"
+```
+
 ### データベース接続エラー
 
 - PostgreSQLサーバーが起動しているか確認

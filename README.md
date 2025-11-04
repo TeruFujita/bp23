@@ -45,6 +45,8 @@ LINE Bot + Web管理UI + Go APIサーバーによる、経路検索と寄り道�
 
 ### 4. データベースを準備
 
+PostgreSQL サービスが起動していることを確認してください（Windows: サービス / macOS: brew services / Linux: systemctl）。
+
 ```powershell
 # データベース作成
 psql -U postgres -c "CREATE DATABASE detour_bot_dev;"
@@ -52,6 +54,29 @@ psql -U postgres -c "CREATE DATABASE detour_bot_dev;"
 # マイグレーション実行（プロジェクトルートから）
 psql "postgres://postgres:YOUR_PASSWORD@localhost:5432/detour_bot_dev?sslmode=disable" -f api-server/migrations/0001_init.sql
 ```
+
+#### 4-1. PostgreSQL が起動していない場合（手動起動）
+
+- Windows（PowerShell 管理者）
+  ```powershell
+  Start-Service "postgresql-x64-18"
+  ```
+  サービスが無い/使えない場合は、`pg_ctl` でも起動できます（パスは環境に合わせて変更）。
+  ```powershell
+  pg_ctl -D "D:\develop\Installers\PostgreSQL\data" start
+  ```
+
+- macOS（Homebrew）
+  ```bash
+  brew services start postgresql@14
+  brew services list
+  ```
+
+- Linux（systemd）
+  ```bash
+  sudo systemctl start postgresql
+  sudo systemctl status postgresql
+  ```
 
 ### 5. サーバーを起動
 
@@ -91,6 +116,7 @@ npm run dev
 | [環境構築ガイド](docs/setup.md) | セットアップ手順、環境変数、起動方法 |
 | [アーキテクチャ概要](docs/architecture.md) | システム構成、技術スタック、設計方針 |
 | [データモデル](docs/data-model.md) | データベーステーブル設計 |
+
 
 ### 🔧 技術詳細
 
