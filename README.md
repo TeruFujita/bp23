@@ -122,7 +122,7 @@ npm run dev
 
 | ドキュメント | 説明 |
 |---|---|
-| [API仕様](docs/api.md) | REST APIエンドポイント一覧（現在は `/healthz` のみ） |
+| [API仕様](docs/api.md) | REST APIエンドポイント一覧 |
 | [外部API連携](docs/external-apis.md) | 使用する外部API（経路探索、店舗検索など） |
 | [LINE Botの仕組み](docs/line-bot-explanation.md) | Webhook、ngrok、署名検証の解説 |
 
@@ -257,12 +257,28 @@ line_bot/
 ### ✅ 実装済み
 
 - LINE Bot: Webhook受信、署名検証、Flexメッセージ返信
-- API Server: `/healthz` エンドポイント、CORS設定
+- API Server: CORS設定、以下のRESTエンドポイント
+
+  - Health
+    - `GET /healthz`
+
+  - Users（LINE ID 連携）
+    - `POST /api/users` 例: `{ "line_id": "Uxxx", "name": "Taro" }`（既存line_idなら既存を返す）
+    - `GET /api/users/:line_id`
+
+  - Routes（ユーザーのルート）
+    - `POST /api/routes` 例: `{ "line_id": "Uxxx", "start_lat": 35.6, "start_lng": 139.7, "end_lat": 35.7, "end_lng": 139.8 }`
+    - `GET /api/users/:line_id/routes`
+
+  - Spots（ルート内スポット）
+    - `POST /api/routes/:route_id/spots` 例: `{ "name": "Cafe", "category": "cafe", "lat": 35.6, "lng": 139.7, "url": "https://...", "rating": 4.5 }`
+    - `GET /api/routes/:route_id/spots`
+
 - データベース: マイグレーションファイル（users, routes, spotsテーブル）
 
 ### 🔄 将来実装予定
 
-- API Server: データベース接続、CRUDエンドポイント
+- API Server: 認証・認可、更新・削除API、入力バリデーション強化
 - Web App: 履歴・お気に入り・統計機能
 - 認証: LINE Login統合
 - 外部API連携: 経路探索、店舗検索
